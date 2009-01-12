@@ -1,0 +1,202 @@
+0,Austria 
+1,Belgium 
+2,Bulgaria 
+3,Croatia 
+4,Czech 
+5,Denmark 
+6,England 
+7,Finland 
+8,France 
+9,Germany 
+10,Greece 
+11,Hungary 
+12,Ireland 
+13,Italy 
+14,Latvia 
+15,Holland 
+16,Northern Ireland 
+17,Norway 
+18,Poland 
+19,Portugal 
+20,Romania 
+21,Russia 
+22,Scotland 
+23,Serbia and Montenegro 
+24,Slovakia 
+25,Slovenia 
+26,Spain 
+27,Sweden 
+28,Switzerland 
+29,Turkey 
+30,Ukraine 
+31,Wales 
+32,Cameroon 
+33,Ivory Coast
+34,Morocco 
+35,Nigeria 
+36,Senegal 
+37,South Africa 
+38,Tunisia 
+39,Costa Rica 
+40,Mexico 
+41,USA 
+42,Argentina 
+43,Brazil 
+44,Chile 
+45,Colombia 
+46,Ecuador 
+47,Paraguay 
+48,Peru 
+49,Uruguay 
+50,Venezuela 
+51,China 
+52,Iran 
+53,Japan 
+54,Saudi Arabia 
+55,South Korea 
+56,Australia 
+57,Classic Argentina 
+58,Classic Brazil 
+59,Classic England 
+60,Classic France 
+61,Classic Germany 
+62,Classic Italy 
+63,Classic Holland 
+64,Arsenal 
+65,Aston Villa 
+66,Birmingham City 
+67,Blackburn Rovers 
+68,Bolton
+69,Charlton 
+70,Chelsea 
+71,Everton 
+72,Fulham 
+73,Liverpool 
+74,Manchester City
+75,Manchester United
+76,Middlesbrough
+77,Newcastle
+78,Portsmouth 
+79,Sunderland 
+80,Tottenham Hotspur
+81,West Bromwich Albion
+82,West Ham
+83,Wigan
+84,Ajaccio 
+85,Monaco 
+86,Auxerre 
+87,Bordeaux 
+88,Le Mans
+89,Lille
+90,Olympique Lyonnais 
+91,Metz 
+92,Nancy-Lorraine 
+93,Nantes
+94,Nice 
+95,Olympique de Marseille 
+96,Paris Saint-Germain
+97,Lens 
+98,Rennais
+99,Saint-Etienne 
+100,Sochaux
+101,Strasbourg 
+102,Toulouse 
+103,Troyes
+104,Koln 
+105,Arminia
+106,Bayer 04 Leverkusen 
+107,Bayern Munchen 
+108,Borussia Dortmund 
+109,Borussia Monchengladbach 
+110,Duisburg 
+111,Eintracht
+112,Hamburger SV 
+113,Hannover 96 
+114,Hertha Berlin 
+115,Kaiserslautern 
+116,Mainz 05 
+117,Nurnberg 
+118,Schalke 04 
+119,Stuttgart 
+120,Wolfsburg 
+121,Werder Bremen 
+122,A.C. Milan
+123,A.S. Roma
+124,Ascoli
+125,Cagliari
+126,Chievo
+127,Empoli
+128,Fiorentina
+129,Inter
+130,Juventus
+131,Lazio
+132,Lecce
+133,Livorno
+134,Messina 
+135,Palermo 
+136,Parma 
+137,Reggina 
+138,Sampdoria 
+139,Siena 
+140,Treviso 
+141,Udinese 
+142,Den Haag 
+143,Ajax 
+144,AZ Alkmaar 
+145,Groningen 
+146,Twente 
+147,Utrecht 
+148,Feyenoord 
+149,Heracles 
+150,Breda 
+151,Nijmegen 
+152,PSV Eindhoven 
+153,Roosendaal 
+154,Waalwijk 
+155,Roda 
+156,Heerenveen 
+157,Sparta Rotterdam 
+158,Vitesse 
+159,Willem II 
+160,Alaves 
+161,Osasuna 
+162,Athletic Bilbao 
+163,Atletico Madrid 
+164,Cadiz 
+165,Celta 
+166,Barcelona 
+167,Getafe 
+168,Malaga 
+169,Real Betis 
+170,Real Madrid 
+171,Racing Club Santander 
+172,Real Sociedad 
+173,Real Zaragoza 
+174,Deportivo La Coruna 
+175,Espanyol 
+176,Mallorca 
+177,Sevilla 
+178,Valencia 
+179,Villarreal 
+180,Benfica 
+181,Besiktas
+182,Celtic 
+183,Djurgardens 
+184,Dynamo Kyiv 
+185,Club Brugge 
+186,FC Kopenhagen 
+187,FC Porto 
+188,Fenerbahce 
+189,Galatasaray 
+190,Lokomotiv Moskva 
+191,Olympiacos 
+192,Panathinaikos 
+193,Rangers 
+194,Rosenborg 
+195,Anderlecht 
+196,Shakhtar Donetsk 
+197,Sparta Praha 
+198,Sporting 
+199,Sao Paolo 
+200,PES United 
+201,WE United 
