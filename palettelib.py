@@ -39,9 +39,9 @@ def makePaletteBMPFromPNG(pngData):
     pal = []
     a,b,n = getPaletteInfoPNG(pngData)
     c,d,m = getTransInfoPNG(pngData)
-    print a,b,n
-    print c,d,m
-    print 'max(%s,%s) = %s' % (m,n,max(m,n))
+    #print a,b,n
+    #print c,d,m
+    #print 'max(%s,%s) = %s' % (m,n,max(m,n))
     for i in range(max(m,n)):
         if i<n:
             pal.append(pngData[a+i*3+2])
