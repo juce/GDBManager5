@@ -649,11 +649,15 @@ class KitPanel(wx.Panel):
             except KeyError: numbers = ""
             if os.path.exists(numbers):
                 bmp = wx.Bitmap(numbers).GetSubBitmap(rect)
-                dc.DrawBitmap(bmp, p[stp]["numbers"][0], p[stp]["numbers"][1], True)
+                scaledbmp = wx.BitmapFromImage(
+                        bmp.ConvertToImage().ResampleBicubic(32,64))
+
+                dc.DrawBitmap(scaledbmp, p[stp]["numbers"][0], p[stp]["numbers"][1], True)
 
                 # render number on the chest, if this is a national kit
                 if self.kit.teamId < 64:
-                    scaledbmp = bmp.ConvertToImage().Scale(16,32).ConvertToBitmap()
+                    scaledbmp = wx.BitmapFromImage(
+                            bmp.ConvertToImage().ResampleBicubic(16,32))
                     dc.DrawBitmap(scaledbmp, p[stp]["chest"][0], p[stp]["chest"][1], True)
 
                 # render number on shorts, using palette file
@@ -665,11 +669,13 @@ class KitPanel(wx.Panel):
 
                     if shortsLoc == "left" or shortsLoc == "both":
                         bmp = getBitmapWithPalette(numbers,numpal,rect)
-                        scaledbmp = bmp.ConvertToImage().Scale(16,32).ConvertToBitmap()
+                        scaledbmp = wx.BitmapFromImage(
+                                bmp.ConvertToImage().ResampleBicubic(16,32))
                         dc.DrawBitmap(scaledbmp, p[stp]["shorts-left"][0], p[stp]["shorts-left"][1], True)
                     if shortsLoc == "right" or shortsLoc == "both":
                         bmp = getBitmapWithPalette(numbers,numpal,rect)
-                        scaledbmp = bmp.ConvertToImage().Scale(16,32).ConvertToBitmap()
+                        scaledbmp = wx.BitmapFromImage(
+                                bmp.ConvertToImage().ResampleBicubic(16,32))
                         dc.DrawBitmap(scaledbmp, p[stp]["shorts-right"][0], p[stp]["shorts-right"][1], True)
 
             # render name
