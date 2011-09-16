@@ -1,5 +1,5 @@
 # GDB Manager
-# Version 5.3
+# Version 5.4
 # by Juce.
 
 import wx
@@ -10,7 +10,7 @@ import sys, os, cStringIO
 import palettelib
 import converter
 
-VERSION, DATE = "5.3", "01/2009"
+VERSION, DATE = "5.4", "09/2011"
 DEFAULT_PNG = os.getcwd() + "/default.png"
 SHORTS_MASK_PNG = os.getcwd() + "/shorts-mask.png"
 SHORTS63_MASK_PNG = os.getcwd() + "/shorts63-mask.png"
@@ -1335,7 +1335,7 @@ inside your kitserver folder)""",
 Version %s from %s
 
 This is a helper program for working with GDB (Graphics Database)
-for Kitserver 5.1/5.2/5.3. Provides simple visual interface to
+for Kitserver 5.1 and newer. Provides simple visual interface to
 define different attributes for kits: 3D-model, collar, image
 files for names and numbers, and some others.""" % (VERSION, DATE),
             "About GDB Manager", wx.OK | wx.ICON_INFORMATION)

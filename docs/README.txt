@@ -1,12 +1,12 @@
-GDB Manager 5                                              January 11, 2009
+GDB Manager 5                                            September 15, 2011
 ===========================================================================
-Version 5.3.1
+Version 5.4.0
 
 
 1. INTRODUCTION
 ---------------
 
-GDB Manager is a GUI front-end for KitServer 5.1/5.2/5.3 GDB (Game DataBase). 
+GDB Manager is a GUI front-end for KitServer 5 GDB (Game DataBase). 
 It simplifies the task of defining kit attributes, such as 3D-model of a 
 shirt, collar type, name location, name shape, and some others.
 

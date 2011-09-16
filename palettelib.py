@@ -4,11 +4,15 @@ import sys, struct, binascii
 
 def getPaletteInfoPNG(data):
     off = data.find("PLTE")-4
+    if off<0:
+        return 0,0,0
     size = struct.unpack(">I",data[off:off+4])[0]
     return off,off+size+12,size/3
 
 def getTransInfoPNG(data):
     off = data.find("tRNS")-4
+    if off<0:
+        return 0,0,0
     size = struct.unpack(">I",data[off:off+4])[0]
     return off,off+size+12,size
 
@@ -32,23 +36,26 @@ def makePalettePNGFromBMP(bmpData):
     return plte,trns
 
 def makePaletteBMPFromPNG(pngData):
-    pal = ""
+    pal = []
     a,b,n = getPaletteInfoPNG(pngData)
     c,d,m = getTransInfoPNG(pngData)
+    print a,b,n
+    print c,d,m
+    print 'max(%s,%s) = %s' % (m,n,max(m,n))
     for i in range(max(m,n)):
         if i<n:
-            pal += pngData[a+i*3+2]
-            pal += pngData[a+i*3+1]
-            pal += pngData[a+i*3]
+            pal.append(pngData[a+i*3+2])
+            pal.append(pngData[a+i*3+1])
+            pal.append(pngData[a+i*3])
         else:
-            pal += '\0\0\0'
+            pal.append('\0\0\0')
         if i<m:
-            pal += pngData[c+i]
+            pal.append(pngData[c+i])
         else:
-            pal += '\xff'
+            pal.append('\xff')
     for i in range(256-max(m,n)):
-        pal += '\0\0\0\xff'
-    return pal
+        pal.append('\0\0\0\xff')
+    return ''.join(pal)
 
 ############
 
