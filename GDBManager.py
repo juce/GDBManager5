@@ -86,31 +86,30 @@ def getBitmapWithPalette(imagefile, palfile, rect):
 def applyMask(bitmap, maskfile):
     maskImg = wx.Bitmap(maskfile).ConvertToImage()
     maskImg.InitAlpha()
+    width,height = bitmap.GetSize()
+    maskImg = maskImg.Scale(width,height)
     img = bitmap.ConvertToImage()
     if not img.HasAlpha(): img.InitAlpha()
-    a,b = img.GetAlphaBuffer(), maskImg.GetAlphaData()
-    #for i in range(len(a)): a[i] = min(a[i], b[i])
-    #img.SetAlphaBuffer(a)
-    img.SetAlphaBuffer(b)
-    return img.ConvertToBitmap()
+    img.SetAlpha(maskImg.GetAlpha())
+    return img.Scale(512,256).ConvertToBitmap()
 
 def hasSamePalette(shirtPath, shortsPath):
-    shirt = "%s\\all.png" % shirtPath
+    shirt = "%s/all.png" % shirtPath
     if not os.path.exists(shirt):
-        shirt = "%s\\shirt.png" % shirtPath
+        shirt = "%s/shirt.png" % shirtPath
         if not os.path.exists(shirt):
-            shirt = "%s\\all.bmp" % shirtPath
+            shirt = "%s/all.bmp" % shirtPath
             if not os.path.exists(shirt):
-                shirt = "%s\\shirt.bmp" % shirtPath
+                shirt = "%s/shirt.bmp" % shirtPath
                 if not os.path.exists(shirt):
                     return False
-    shorts = "%s\\all.png" % shortsPath
+    shorts = "%s/all.png" % shortsPath
     if not os.path.exists(shorts):
-        shorts = "%s\\shorts.png" % shortsPath
+        shorts = "%s/shorts.png" % shortsPath
         if not os.path.exists(shorts):
-            shorts = "%s\\all.bmp" % shortsPath
+            shorts = "%s/all.bmp" % shortsPath
             if not os.path.exists(shorts):
-                shorts = "%s\\shorts.bmp" % shortsPath
+                shorts = "%s/shorts.bmp" % shortsPath
                 if not os.path.exists(shorts):
                     return False
     return palettelib.samePalette(shirt, shorts)
@@ -1286,9 +1285,11 @@ inside your kitserver folder)""",
             if (child): allkits.append(self.tree.GetItemData(child))
         kitKeyList = []
         for kit in allkits:
-            if hasSamePalette(self.kitPanel.kit.foldername, kit.foldername):
+            #if hasSamePalette(self.kitPanel.kit.foldername, kit.foldername):
+            mine = os.path.split(self.kitPanel.kit.foldername)[1]
+            item = os.path.split(kit.foldername)[1]
+            if mine[0] == item[0]:
                 readAttributes(kit)
-                item = os.path.split(kit.foldername)[1]
                 self.shortsKeys.choice.Append(item, kit)
                 kitKeyList.append(item)
 
