@@ -184,16 +184,16 @@ class RGBAColor:
 
 
 """
-Utility method to construct wx.Color object 
+Utility method to construct wx.Colour object 
 from a RRGGBBAA string, as used in attrib.cfg files
 """
 def MakeRGBAColor(str):
     r, g, b = int(str[0:2],16), int(str[2:4],16), int(str[4:6],16)
     try:
         a = int(str[6:8], 16)
-        return RGBAColor(wx.Color(r,g,b), a)
+        return RGBAColor(wx.Colour(r,g,b), a)
     except:
-        return RGBAColor(wx.Color(r,g,b), -1)
+        return RGBAColor(wx.Colour(r,g,b), -1)
 
 
 """
@@ -525,7 +525,7 @@ A panel with kit texture
 class KitPanel(wx.Panel):
     def __init__(self, parent, frame=None):
         wx.Panel.__init__(self, parent, -1, size=(512, 256))
-        self.SetBackgroundColour(wx.Color(180,180,200))
+        self.SetBackgroundColour(wx.Colour(180,180,200))
         self.frame = frame
         self.kit = None
 
@@ -901,9 +901,9 @@ Do you want to save them?""",
 
         isz = (16,16)
         il = wx.ImageList(isz[0], isz[1])
-        self.fldridx     = il.Add(wx.ArtProvider_GetBitmap(wx.ART_FOLDER,      wx.ART_OTHER, isz))
-        self.fldropenidx = il.Add(wx.ArtProvider_GetBitmap(wx.ART_FILE_OPEN,   wx.ART_OTHER, isz))
-        self.fileidx     = il.Add(wx.ArtProvider_GetBitmap(wx.ART_NORMAL_FILE, wx.ART_OTHER, isz))
+        self.fldridx     = il.Add(wx.ArtProvider.GetBitmap(wx.ART_FOLDER,      wx.ART_OTHER, isz))
+        self.fldropenidx = il.Add(wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN,   wx.ART_OTHER, isz))
+        self.fileidx     = il.Add(wx.ArtProvider.GetBitmap(wx.ART_NORMAL_FILE, wx.ART_OTHER, isz))
 
         self.SetImageList(il)
         self.il = il
@@ -939,6 +939,7 @@ Do you want to save them?""",
                         id, val = int(tok[0].strip()), tok[1].strip()
                         if val[0]=='"' and val[-1]=='"': val = val[1:-1]
                         folder = os.path.normcase(self.gdbPath + "/uni/" + val)
+                        folder = folder.replace('\\', os.path.sep)
                         self.teamMap[id] = folder
                         self.reverseTeamMap[folder] = id
 

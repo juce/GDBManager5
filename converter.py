@@ -1,5 +1,5 @@
 import  wx
-import  wx.wizard as wiz
+from wx import adv as wiz
 import  os, os.path
 
 #----------------------------------------------------------------------
@@ -441,10 +441,10 @@ back to GDB Manager.
 """))
 
     # Use the convenience Chain function to connect the pages
-    wiz.WizardPageSimple_Chain(page1, page2)
-    wiz.WizardPageSimple_Chain(page2, page3)
-    wiz.WizardPageSimple_Chain(page3, page4)
-    wiz.WizardPageSimple_Chain(page4, page5)
+    wiz.WizardPageSimple.Chain(page1, page2)
+    wiz.WizardPageSimple.Chain(page2, page3)
+    wiz.WizardPageSimple.Chain(page3, page4)
+    wiz.WizardPageSimple.Chain(page4, page5)
 
     return wizard.RunWizard(page1)
 
