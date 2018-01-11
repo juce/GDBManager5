@@ -874,10 +874,12 @@ Do you want to save them?""",
     Creates new Kit object
     """
     def makeKit(self, path):
+        path = path.decode(fs_encoding)
+        path = unicodedata.normalize('NFC',path)
+        path = os.path.normcase(path)
         kit = Kit(path)
         try: 
-            foldername = os.path.normcase(os.path.split(path)[0]).decode(fs_encoding)
-            foldername = unicodedata.normalize('NFC',foldername)
+            foldername = os.path.split(path)[0]
             kit.teamId = self.reverseTeamMap[foldername]
             kit.shortsKey = os.path.split(path)[1]
         except KeyError:
