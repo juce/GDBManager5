@@ -448,7 +448,7 @@ class MyNumbersFile(wx.Panel):
 
         dlg = wx.FileDialog(
             self, message="Choose a file", defaultDir=currdir, 
-            defaultFile="", wildcard=wildcard, style=wx.OPEN | wx.CHANGE_DIR
+            defaultFile="", wildcard=wildcard, style=wx.FD_OPEN | wx.FD_CHANGE_DIR
             )
 
         # Show the dialog and retrieve the user response. If it is the OK response, 
@@ -501,7 +501,7 @@ class MyShortsNumPalFile(MyNumbersFile):
 
         dlg = wx.FileDialog(
             self, message="Choose a file", defaultDir=currdir, 
-            defaultFile="", wildcard=wildcard, style=wx.OPEN | wx.CHANGE_DIR
+            defaultFile="", wildcard=wildcard, style=wx.FD_OPEN | wx.FD_CHANGE_DIR
             )
 
         # Show the dialog and retrieve the user response. If it is the OK response, 
@@ -797,7 +797,7 @@ class GDBTree(wx.TreeCtrl):
         self.frame = frame
 
         self.root = self.AddRoot("GDB")
-        self.SetPyData(self.root, None)
+        self.SetItemData(self.root, None)
 
         self.teamMap = dict()
         self.reverseTeamMap = dict()
@@ -859,7 +859,7 @@ Do you want to save them?""",
         try:
             item = event.GetItem()
             print "OnSelChanged: %s" % self.GetItemText(item)
-            kit = self.GetPyData(item)
+            kit = self.GetItemData(item)
             self.frame.selectKit(kit)
 
         except wx._core.PyAssertionError:
@@ -884,7 +884,7 @@ Do you want to save them?""",
         if os.path.isdir(path) and path.rfind("/uni/masks")==-1:
             child = self.AppendItem(node, "%s" % os.path.split(path)[1])
             kit = self.makeKit(path)
-            self.SetPyData(child, kit)
+            self.SetItemData(child, kit)
             self.SetItemImage(child, self.fldridx, wx.TreeItemIcon_Normal)
             self.SetItemImage(child, self.fldropenidx, wx.TreeItemIcon_Expanded)
 
@@ -1280,10 +1280,10 @@ inside your kitserver folder)""",
         parent = self.tree.GetItemParent(self.tree.GetSelection())
         allkits = []
         child,cookie = self.tree.GetFirstChild(parent)
-        if (child): allkits.append(self.tree.GetItemPyData(child))
+        if (child): allkits.append(self.tree.GetItemData(child))
         while child:
             child,cookie = self.tree.GetNextChild(parent,cookie)
-            if (child): allkits.append(self.tree.GetItemPyData(child))
+            if (child): allkits.append(self.tree.GetItemData(child))
         kitKeyList = []
         for kit in allkits:
             if hasSamePalette(self.kitPanel.kit.foldername, kit.foldername):
