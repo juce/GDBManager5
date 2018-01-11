@@ -6,6 +6,7 @@ import wx
 import wx.lib.colourselect as csel
 import string, math
 import sys, os, cStringIO
+import unicodedata
 
 import palettelib
 import converter
@@ -16,6 +17,9 @@ SHORTS_MASK_PNG = os.getcwd() + "/shorts-mask.png"
 SHORTS63_MASK_PNG = os.getcwd() + "/shorts63-mask.png"
 WIZARD_PNG = os.getcwd() + "/wizard.png"
 WINDOW_TITLE = "GDB Manager 5"
+
+fs_encoding = sys.getfilesystemencoding()
+mapfile_encoding = os.environ.get('GDB_MAP_ENCODING', 'latin-1')
 
 overlayPositions = {
     "wide-back":{
@@ -870,10 +874,12 @@ Do you want to save them?""",
     def makeKit(self, path):
         kit = Kit(path)
         try: 
-            foldername = os.path.normcase(os.path.split(path)[0])
+            foldername = os.path.normcase(os.path.split(path)[0]).decode(fs_encoding)
+            foldername = unicodedata.normalize('NFC',foldername)
             kit.teamId = self.reverseTeamMap[foldername]
             kit.shortsKey = os.path.split(path)[1]
-        except KeyError: kit.teamId = -1
+        except KeyError:
+            kit.teamId = -1
         return kit
 
     """
@@ -921,10 +927,10 @@ Do you want to save them?""",
             # read map.txt
             self.teamMap.clear()
             self.reverseTeamMap.clear()
-            try: map = open(gdbPath + "/uni/map.txt","rt")
+            try: mapfile = open(gdbPath + "/uni/map.txt","rt;encoding=%s" % mapfile_encoding)
             except IOError: pass
             else:
-                for line in map:
+                for line in mapfile:
                     # strip off comments
                     comm = line.find("#")
                     if comm > -1:
@@ -935,14 +941,15 @@ Do you want to save them?""",
 
                     tok = line.split(',',1)
                     if len(tok)==2:
-                        id, val = int(tok[0].strip()), tok[1].strip()
+                        teamId, val = int(tok[0].strip()), tok[1].strip()
                         if val[0]=='"' and val[-1]=='"': val = val[1:-1]
                         folder = os.path.normcase(self.gdbPath + "/uni/" + val)
-                        folder = folder.replace('\\', os.path.sep)
-                        self.teamMap[id] = folder
-                        self.reverseTeamMap[folder] = id
+                        folder = folder.replace('\\', os.path.sep).decode('latin-1')
+                        folder = unicodedata.normalize('NFC',folder)
+                        self.teamMap[teamId] = folder
+                        self.reverseTeamMap[folder] = teamId
 
-                map.close()
+                mapfile.close()
 
             # add all the dirs
             teamDirs = self.addDir(self.root, gdbPath + "/uni")
