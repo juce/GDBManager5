@@ -10,9 +10,10 @@ import unicodedata
 
 import palettelib
 import converter
+import codecs
 import chardet
 
-VERSION, DATE = "5.4", "09/2011"
+VERSION, DATE = "5.5", "01/2018"
 DEFAULT_PNG = os.getcwd() + "/default.png"
 SHORTS_MASK_PNG = os.getcwd() + "/shorts-mask.png"
 SHORTS63_MASK_PNG = os.getcwd() + "/shorts63-mask.png"
@@ -887,11 +888,10 @@ Do you want to save them?""",
     Creates new Kit object
     """
     def makeKit(self, path):
-        path = path.decode(fs_encoding)
-        path = unicodedata.normalize('NFC',path)
-        path = os.path.normcase(path)
         kit = Kit(path)
         try: 
+            path = unicodedata.normalize('NFC',path)
+            path = os.path.normcase(path)
             foldername = os.path.split(path)[0]
             kit.teamId = self.reverseTeamMap[foldername]
             kit.shortsKey = os.path.split(path)[1]
@@ -904,7 +904,8 @@ Do you want to save them?""",
     """
     def addDir(self, node, path):
         if os.path.isdir(path) and path.rfind("/uni/masks")==-1:
-            child = self.AppendItem(node, "%s" % os.path.split(path)[1])
+            #print "addDir:",path
+            child = self.AppendItem(node, os.path.split(path)[1])
             kit = self.makeKit(path)
             self.SetItemData(child, kit)
             self.SetItemImage(child, self.fldridx, wx.TreeItemIcon_Normal)
@@ -912,8 +913,8 @@ Do you want to save them?""",
 
             dirs = ["%s/%s" % (path,item) for item in os.listdir(path)]
             dirs.sort()
-            for dir in dirs:
-                self.addDir(child,dir)
+            for d in dirs:
+                self.addDir(child,d)
 
 
     def updateTree(self):
@@ -959,7 +960,7 @@ Do you want to save them?""",
                 mapfile_encoding = mapfile_encoding or DEFAULT_MAPFILE_ENCODING
             # now read the map
             print "Using mapfile_encoding: %s" % mapfile_encoding
-            try: mapfile = open(gdbPath + "/uni/map.txt","rt;encoding=%s" % mapfile_encoding)
+            try: mapfile = codecs.open(gdbPath + "/uni/map.txt",encoding=mapfile_encoding)
             except IOError: pass
             else:
                 for line in mapfile:
@@ -976,7 +977,7 @@ Do you want to save them?""",
                         teamId, val = int(tok[0].strip()), tok[1].strip()
                         if val[0]=='"' and val[-1]=='"': val = val[1:-1]
                         folder = os.path.normcase(self.gdbPath + "/uni/" + val)
-                        folder = folder.replace('\\', os.path.sep).decode('latin-1')
+                        folder = folder.replace('\\', os.path.sep)
                         folder = unicodedata.normalize('NFC',folder)
                         self.teamMap[teamId] = folder
                         self.reverseTeamMap[folder] = teamId
@@ -1068,7 +1069,7 @@ class MyFrame(wx.Frame):
 
         # Kit database folder
         try:
-            cfg = open("gdbm.cfg", "rt")
+            cfg = codecs.open("gdbm.cfg", encoding=fs_encoding)
             self.gdbPath = cfg.read().strip()
             cfg.close()
         except IOError:
@@ -1181,7 +1182,7 @@ inside your kitserver folder)""",
 
             # save the value in configuration file
             try:
-                cfg = open("gdbm.cfg", "wt")
+                cfg = codecs.open("gdbm.cfg", "w", encoding=fs_encoding)
                 print >>cfg, self.gdbPath
                 cfg.close()
             except IOError:
