@@ -10,6 +10,7 @@ import unicodedata
 
 import palettelib
 import converter
+import chardet
 
 VERSION, DATE = "5.4", "09/2011"
 DEFAULT_PNG = os.getcwd() + "/default.png"
@@ -19,7 +20,8 @@ WIZARD_PNG = os.getcwd() + "/wizard.png"
 WINDOW_TITLE = "GDB Manager 5"
 
 fs_encoding = sys.getfilesystemencoding()
-mapfile_encoding = os.environ.get('GDB_MAP_ENCODING', 'latin-1')
+VAR_GDB_MAPFILE_ENCODING = 'GDB_MAP_ENCODING'
+DEFAULT_MAPFILE_ENCODING = 'latin-1'
 
 overlayPositions = {
     "wide-back":{
@@ -927,6 +929,21 @@ Do you want to save them?""",
             # read map.txt
             self.teamMap.clear()
             self.reverseTeamMap.clear()
+            # try to figure out mapfile_encoding, if not explicitly set
+            mapfile_encoding = os.environ.get(VAR_GDB_MAPFILE_ENCODING)
+            if not mapfile_encoding:
+                try:
+                    mapfile = open(gdbPath + "/uni/map.txt","rb")
+                    raw_data = mapfile.read()
+                    res = chardet.detect(raw_data)
+                    print res
+                    if res['confidence'] > 0.7:
+                        mapfile_encoding = res['encoding']
+                except IOError:
+                    print "WARN: Unable to auto-detect map.txt encoding. Reverting to default"
+                mapfile_encoding = mapfile_encoding or DEFAULT_MAPFILE_ENCODING
+            # now read the map
+            print "Using mapfile_encoding: %s" % mapfile_encoding
             try: mapfile = open(gdbPath + "/uni/map.txt","rt;encoding=%s" % mapfile_encoding)
             except IOError: pass
             else:
