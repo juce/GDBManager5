@@ -67,7 +67,7 @@ setup(
         data_files=[
             (".",[
                 "default.png","shorts-mask.png","shorts63-mask.png",
-                "wizard.png","converter.txt", "msvcp71.dll"]),
+                "wizard.png","converter.txt"]),
             ("docs",[
                 "docs/README.txt"])
         ]
