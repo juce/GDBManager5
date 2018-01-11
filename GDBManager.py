@@ -86,7 +86,7 @@ def getBitmapWithPalette(imagefile, palfile, rect):
     imageData = palettelib.usePalette(imagefile,palfile)
     # make the bitmap from data
     stream = cStringIO.StringIO(imageData)
-    bmp = wx.BitmapFromImage( wx.ImageFromStream( stream ))
+    bmp = wx.Bitmap( wx.Image( stream ))
     return bmp.GetSubBitmap(rect)
 
 def applyMask(bitmap, maskfile):
@@ -121,15 +121,21 @@ def hasSamePalette(shirtPath, shortsPath):
     return palettelib.samePalette(shirt, shorts)
 
 def makeRelativePath(path, base):
+    print "makeRelativePath:"
+    path = os.path.normcase(os.path.realpath(path.replace('\\',os.path.sep)))
+    base = os.path.normcase(os.path.realpath(base.replace('\\',os.path.sep)))
+    print ">>",path
+    print ">>",base
     prefix = os.path.commonprefix([path,base])
+    print ">>",prefix
     if len(prefix)==0:
         return path
-    if prefix[-1] != '\\':
-        prefix = prefix[:prefix.rfind('\\')+1]
+    if prefix[-1] != os.path.sep:
+        prefix = prefix[:prefix.rfind(os.path.sep)+1]
     relPath = path[len(prefix):]
     baseRest = base[len(prefix):]
-    for backdir in baseRest.split("\\"):
-        relPath = "../%s" % relPath
+    for backdir in baseRest.split(os.path.sep):
+        relPath = "..\\%s" % relPath
     return os.path.normcase(relPath)
 
 """
@@ -516,7 +522,7 @@ class MyShortsNumPalFile(MyNumbersFile):
             files = dlg.GetPaths()
             if len(files)>0:
                 newfile = os.path.normcase(files[0])
-                foldername = "%s\\%s" % (os.path.split(kit.foldername)[0], kit.shortsKey)
+                foldername = "%s/%s" % (os.path.split(kit.foldername)[0], kit.shortsKey)
                 # make relative path
                 self.SetStringSelection(makeRelativePath(newfile, foldername))
 
@@ -543,7 +549,10 @@ class KitPanel(wx.Panel):
         if width != 512 and height != 256:
             bmp = bmp.ConvertToImage().Scale(512,256).ConvertToBitmap()
         dc.DrawBitmap(bmp, 0, 0, True)
-        self.frame.SetTitle('%s: %dx%d kit' % (WINDOW_TITLE, width, height))
+        if self.kit and self.kit.teamId != -1:
+            self.frame.SetTitle('%s: (team %d) %dx%d kit' % (WINDOW_TITLE, self.kit.teamId, width, height))
+        else:
+            self.frame.SetTitle('%s: %dx%d kit' % (WINDOW_TITLE, width, height))
 
     def drawBitmap(self, dc, kit):
         if os.path.exists(kit.foldername + "/all.png"):
@@ -650,23 +659,27 @@ class KitPanel(wx.Panel):
                 stp = "wide-back"
 
             # render number
-            try: numbers = "%s/%s" % (kit.foldername, kit.attributes["numbers"])
+            try:
+                numbers = "%s/%s" % (kit.foldername, kit.attributes["numbers"])
+                numbers = numbers.replace('\\',os.path.sep)
             except KeyError: numbers = ""
             if os.path.exists(numbers):
                 bmp = wx.Bitmap(numbers).GetSubBitmap(rect)
-                scaledbmp = wx.BitmapFromImage(
-                        bmp.ConvertToImage().ResampleBicubic(32,64))
+                scaledbmp = wx.Bitmap(
+                        bmp.ConvertToImage().Scale(32,64))
 
                 dc.DrawBitmap(scaledbmp, p[stp]["numbers"][0], p[stp]["numbers"][1], True)
 
                 # render number on the chest, if this is a national kit
                 if self.kit.teamId < 64:
-                    scaledbmp = wx.BitmapFromImage(
-                            bmp.ConvertToImage().ResampleBicubic(16,32))
+                    scaledbmp = wx.Bitmap(
+                            bmp.ConvertToImage().Scale(16,32))
                     dc.DrawBitmap(scaledbmp, p[stp]["chest"][0], p[stp]["chest"][1], True)
 
                 # render number on shorts, using palette file
-                try: numpal = "%s/%s" % (kit.foldername, kit.attributes["shorts.num-pal."+kit.shortsKey])
+                try:
+                    numpal = "%s/%s" % (kit.foldername, kit.attributes["shorts.num-pal."+kit.shortsKey])
+                    numpal = numpal.replace('\\',os.path.sep)
                 except KeyError: numpal = ""
                 if os.path.exists(numpal):
                     try: shortsLoc = self.frame.shortsNumLocation.kit.attributes["shorts.number.location"]
@@ -674,13 +687,13 @@ class KitPanel(wx.Panel):
 
                     if shortsLoc == "left" or shortsLoc == "both":
                         bmp = getBitmapWithPalette(numbers,numpal,rect)
-                        scaledbmp = wx.BitmapFromImage(
-                                bmp.ConvertToImage().ResampleBicubic(16,32))
+                        scaledbmp = wx.Bitmap(
+                                bmp.ConvertToImage().Scale(16,32))
                         dc.DrawBitmap(scaledbmp, p[stp]["shorts-left"][0], p[stp]["shorts-left"][1], True)
                     if shortsLoc == "right" or shortsLoc == "both":
                         bmp = getBitmapWithPalette(numbers,numpal,rect)
-                        scaledbmp = wx.BitmapFromImage(
-                                bmp.ConvertToImage().ResampleBicubic(16,32))
+                        scaledbmp = wx.Bitmap(
+                                bmp.ConvertToImage().Scale(16,32))
                         dc.DrawBitmap(scaledbmp, p[stp]["shorts-right"][0], p[stp]["shorts-right"][1], True)
 
             # render name
@@ -1393,7 +1406,7 @@ files for names and numbers, and some others.""" % (VERSION, DATE),
     """
     Saves the changes for altered kits to corresponding attrib.cfg files
     """
-    def saveChanges(self, showConfirmation=True):
+    def saveChanges(self, showConfirmation=False):
         print "Saving changes..."
 
         # TEMP:test
