@@ -24,6 +24,8 @@ fs_encoding = sys.getfilesystemencoding()
 VAR_GDB_MAPFILE_ENCODING = 'GDB_MAP_ENCODING'
 DEFAULT_MAPFILE_ENCODING = 'latin-1'
 
+DEFAULT_MASK = "mask.png"
+
 overlayPositions = {
     "wide-back":{
         "numbers":[220,46], 
@@ -172,13 +174,14 @@ def readAttributes(kit):
             if len(line.strip())==0:
                 continue
 
-            tok = line.split()
-            if len(tok)==3:
-                val = tok[2].strip()
-                if val[0]=='"' and val[-1]=='"': val = val[1:-1]
-                kit.attributes[tok[0].strip()] = val
+            tok = line.split('=',1)
+            if len(tok)==2:
+                name = tok[0].strip()
+                val = tok[1].strip(' "')
+                kit.attributes[name] = val
 
         att.close()
+        print kit.attributes
 
     except IOError:
         # unable to read attributes. Ignore.
@@ -216,6 +219,143 @@ def MessageBox(owner, title, text):
     dlg.ShowModal()
     dlg.Destroy()
 
+"""
+A panel with colour select button, label, and edit control
+"""
+class KitColourSelect(wx.Panel):
+    def __init__(self, parent, attribute, labelText, frame):
+        wx.Panel.__init__(self, parent, -1)
+
+        self.undef = wx.Colour(0x99,0x99,0x99)
+        self.att = attribute
+        #self.label = wx.StaticText(self, -1, labelText, size=(120, -1), style=wx.ALIGN_RIGHT)
+        #font = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
+        #self.label.SetFont(font)
+        #self.label.SetSize(self.label.GetBestSize())
+
+        ##########################
+        self.label = wx.StaticText(self, -1, labelText, size=(180,-1), style=wx.ALIGN_RIGHT)
+        self.label.SetBackgroundColour(wx.Colour(230,230,230))
+        font = wx.Font(10, wx.SWISS, wx.NORMAL, wx.NORMAL)
+        self.label.SetFont(font)
+        self.label.SetSize(self.label.GetBestSize())
+
+        #self.choice = wx.Choice(self, -1, choices=[str(i) for i in items], size=(100,-1))
+        #self.choice.SetSelection(0)
+        #self.button = wx.Button(self, -1, "undef", size=(60,1))
+
+        #self.sizer = wx.BoxSizer(wx.HORIZONTAL)
+        #self.sizer.Add(self.button, 0, wx.RIGHT | wx.EXPAND, border=10)
+        #self.sizer.Add(self.label, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border=10)
+        #self.sizer.Add(self.choice, 0, wx.EXPAND)
+        ##############################
+
+
+        self.cs = csel.ColourSelect(self, -1, "", self.undef, size=(40,-1))
+        self.edit = wx.TextCtrl(self, -1, "undefined", style=wx.TE_PROCESS_ENTER, validator=MyValidator(), size=(80,-1))
+        self.edit.SetMaxLength(8)
+        self.button = wx.Button(self, -1, "undef", size=(60, -1)) 
+        self.frame = frame
+
+        csSizer = wx.BoxSizer(wx.HORIZONTAL)
+        csSizer.Add(self.cs, 0, wx.EXPAND)
+        csSizer.Add(self.edit, 0, wx.EXPAND)
+
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.Add(self.button, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border=10)
+        sizer.Add(self.label, 0, wx.EXPAND)
+        sizer.Add(csSizer, 0, wx.LEFT | wx.EXPAND, border=10)
+
+        self.SetSizer(sizer)
+        self.Layout()
+
+        self.cs.Bind(csel.EVT_COLOURSELECT, self.OnSelectColour)
+        self.edit.Bind(wx.EVT_TEXT_ENTER, self.OnEditColour)
+        self.button.Bind(wx.EVT_BUTTON, self.OnUndef)
+
+
+    def SetColour(self, color):
+        self.cs.SetColour(color)
+        self.edit.SetValue("%02X%02X%02X" % (color.Red(), color.Green(), color.Blue()))
+        # update the kit panel
+        try:
+            self.frame.kitPanel.kit.attributes[self.att] = self.edit.GetValue()
+            self.frame.kitPanel.Refresh()
+        except AttributeError:
+            pass
+        except KeyError:
+            pass
+
+    def SetRGBAColour(self, rgba):
+        color = rgba.color
+        self.cs.SetColour(color)
+        if rgba.alpha == -1:
+            self.edit.SetValue("%02X%02X%02X" % (color.Red(), color.Green(), color.Blue()))
+        else:
+            self.edit.SetValue("%02X%02X%02X%02X" % (color.Red(), color.Green(), color.Blue(), rgba.alpha))
+        # update the kit panel
+        try:
+            self.frame.kitPanel.kit.attributes[self.att] = self.edit.GetValue()
+            self.frame.kitPanel.Refresh()
+        except AttributeError:
+            pass
+        except KeyError:
+            pass
+
+
+    def ClearColour(self):
+        self.cs.SetColour(self.undef)
+        self.edit.SetValue("undefined")
+        # update the kit panel
+        try:
+            del self.frame.kitPanel.kit.attributes[self.att]
+            self.frame.kitPanel.Refresh()
+        except AttributeError:
+            pass
+        except KeyError:
+            pass
+
+
+    """
+    Sets attribute to newly selected color
+    """
+    def OnSelectColour(self, event):
+        self.SetColour(event.GetValue())
+
+        # add to modified list
+        self.frame.addKitToModified()
+
+
+    """
+    Verifies manually edited color and sets attribute
+    """
+    def OnEditColour(self, event):
+        text = self.edit.GetValue()
+        # add padding zeroes, if needed
+        if len(text) < 6:
+            text = "%s%s" % ('0'*(6-len(text)), text)
+
+        # attempt to set the color
+        color = self.undef
+        try:
+            color = MakeRGBAColor(text)
+            self.SetRGBAColour(color)
+        except:
+            self.ClearColour()
+
+        # add to modified list
+        self.frame.addKitToModified()
+
+
+    """
+    Removes color definition from attributes
+    """
+    def OnUndef(self, event):
+        self.ClearColour()
+
+        # add to modified list
+        self.frame.addKitToModified()
+
 
 class MyValidator(wx.PyValidator):
     def __init__(self):
@@ -252,6 +392,7 @@ class MyValidator(wx.PyValidator):
         # Returning without calling even.Skip eats the event before it
         # gets to the text control
         return
+
 
 """
 A drop-down list with label
@@ -341,6 +482,8 @@ class MyList(wx.Panel):
         if str == None:
             try: str = kit.attributes[self.att]
             except KeyError: str = "undefined"
+        if self.choice.FindString(str) == wx.NOT_FOUND:
+            self.choice.SetString(0,str)
         self.choice.SetStringSelection(str)
         kit.attributes[self.att] = str
         if self.refreshOnChange:
@@ -349,6 +492,7 @@ class MyList(wx.Panel):
 
     def SetUndef(self):
         kit = self.getKit()
+        self.choice.SetString(0,"undefined")
         self.choice.SetSelection(0)
         try:
             del kit.attributes[self.att] 
@@ -380,6 +524,88 @@ class MyList(wx.Panel):
 
         # add kit to modified set
         self.frame.addKitToModified(kit)
+
+
+"""
+A text field choice with label
+"""
+class MyTextField(wx.Panel):
+    def __init__(self, parent, attribute, labelText, value, rootPath, frame, kit=None):
+        wx.Panel.__init__(self, parent, -1)
+        self.rootPath = rootPath
+        self.frame = frame
+        self.kit = kit
+        self.att = attribute
+        self.label = wx.StaticText(self, -1, labelText, size=(100,-1), style=wx.ALIGN_RIGHT)
+        self.label.SetBackgroundColour(wx.Colour(230,230,230))
+        font = wx.Font(10, wx.SWISS, wx.NORMAL, wx.NORMAL)
+        self.label.SetFont(font)
+        self.label.SetSize(self.label.GetBestSize())
+
+        self.text = wx.TextCtrl(self, -1, "", size=(200,-1))
+        self.button = wx.Button(self, -1, "undef", size=(60,1))
+
+        self.sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.sizer.Add(self.button, 0, wx.RIGHT | wx.EXPAND, border=10)
+        self.sizer.Add(self.label, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border=10)
+        self.sizer.Add(self.text, 0, wx.EXPAND)
+
+        # by default the kit panel is not refreshed on selection change
+        self.refreshOnChange = False
+
+        # bind events
+        #self.text.Bind(wx.EVT_CHOICE, self.OnSelect)
+        self.button.Bind(wx.EVT_BUTTON, self.OnUndef)
+        self.text.Bind(wx.EVT_TEXT, self.OnTextChange)
+
+        self.SetSizer(self.sizer)
+        self.Layout()
+
+
+    def getKit(self):
+        kit = self.kit
+        if kit == None: kit = self.frame.kitPanel.kit
+        return kit
+
+
+    def SetStringSelection(self, str):
+        kit = self.getKit()
+        self.text.SetValue(str)
+        kit.attributes[self.att] = str
+        if self.refreshOnChange:
+            self.frame.kitPanel.Refresh()
+
+    def SetUndef(self):
+        kit = self.getKit()
+        self.text.SetValue("")
+        try:
+            del kit.attributes[self.att] 
+        except AttributeError:
+            pass
+        except KeyError:
+            pass
+        if self.refreshOnChange:
+            self.frame.kitPanel.Refresh()
+
+    def OnUndef(self, event):
+        kit = self.getKit()
+        self.SetUndef()
+
+        # add kit to modified set
+        self.frame.addKitToModified(kit)
+
+    def OnTextChange(self, event):
+        kit = self.getKit()
+        if kit != None:
+            oldVal = kit.attributes.get(self.att,"")
+            newVal = self.text.GetValue()
+            if newVal != oldVal:
+                #print "Description modified: old={%s}, new={%s}" % (oldVal,newVal)
+                kit.attributes[self.att] = newVal
+                # add kit to modified set
+                self.frame.addKitToModified(kit)
+
+
 
 """
 A file choice with label
@@ -532,6 +758,219 @@ class MyShortsNumPalFile(MyNumbersFile):
 
 
 """
+A dir choice with label
+"""
+class MyPartFolder(MyNumbersFile):
+
+    def __init__(self, parent, attribute, labelText, value, rootPath, frame, kit=None):
+        wx.Panel.__init__(self, parent, -1)
+        self.rootPath = rootPath
+        self.frame = frame
+        self.kit = kit
+        self.att = attribute
+        self.label = wx.StaticText(self, -1, labelText, size=(140,-1), style=wx.ALIGN_RIGHT)
+        self.label.SetBackgroundColour(wx.Colour(230,230,230))
+        font = wx.Font(10, wx.SWISS, wx.NORMAL, wx.NORMAL)
+        self.label.SetFont(font)
+        self.label.SetSize(self.label.GetBestSize())
+
+        self.text = wx.TextCtrl(self, -1, "", size=(130,-1))
+        self.text.SetEditable(False)
+        self.button = wx.Button(self, -1, "undef", size=(60,1))
+        self.fileButton = wx.Button(self, -1, "...", size=(30,1))
+
+        self.sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.sizer.Add(self.button, 0, wx.RIGHT | wx.EXPAND, border=10)
+        self.sizer.Add(self.label, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border=10)
+        self.sizer.Add(self.text, 0, wx.EXPAND)
+        self.sizer.Add(self.fileButton, 0, wx.EXPAND)
+
+        # by default the kit panel is not refreshed on selection change
+        self.refreshOnChange = False
+
+        # bind events
+        #self.text.Bind(wx.EVT_CHOICE, self.OnSelect)
+        self.button.Bind(wx.EVT_BUTTON, self.OnUndef)
+        self.fileButton.Bind(wx.EVT_BUTTON, self.OnChooseFile)
+
+        self.SetSizer(self.sizer)
+        self.Layout()
+
+    def SetStringSelection(self, str=None):
+        kit = self.getKit()
+        if str == None:
+            try: str = kit.attributes[self.att]
+            except KeyError: str = "undefined"
+        self.text.SetValue(str)
+        kit.attributes[self.att] = str
+        if self.refreshOnChange:
+            self.frame.kitPanel.Refresh()
+
+    def SetUndef(self):
+        kit = self.getKit()
+        self.text.SetValue("")
+        try:
+            del kit.attributes[self.att] 
+        except AttributeError:
+            pass
+        except KeyError:
+            pass
+        if self.refreshOnChange:
+            self.frame.kitPanel.Refresh()
+
+    def OnChooseFile(self, event):
+        kit = self.getKit()
+        tokens = os.path.split(kit.foldername)
+        items = [d for d in os.listdir(tokens[0])
+                    if os.path.isdir("%s/%s" % (tokens[0],d)) and d[0] in ['p','g']]
+        defaultItem = kit.attributes.get(self.att)
+        dlg = wx.SingleChoiceDialog(
+                self, 'Select the kit part folder', 'Folder selector', items,
+                wx.CHOICEDLG_STYLE
+                )
+        if defaultItem in items: dlg.SetSelection(items.index(defaultItem))
+        if dlg.ShowModal() == wx.ID_OK:
+            path = dlg.GetStringSelection()
+            print "You selected: %s" % path
+            if path:
+                newpath = os.path.normcase(path)
+                self.SetStringSelection(newpath)
+
+                # add kit to modified set
+                self.frame.addKitToModified()
+
+        dlg.Destroy()
+
+
+"""
+A file choice with label
+"""
+class MyMaskFile(MyPartFolder):
+
+    def SetStringSelection(self, str=None):
+        kit = self.getKit()
+        if not str: str = kit.attributes.get(self.att,"")
+        self.text.SetValue(str)
+        kit.attributes[self.att] = str
+        if self.refreshOnChange:
+            self.frame.kitPanel.Refresh()
+
+    def SetUndef(self):
+        kit = self.getKit()
+        self.text.SetValue("")
+        try:
+            del kit.attributes[self.att]
+        except AttributeError:
+            pass
+        except KeyError:
+            pass
+        if self.refreshOnChange:
+            self.frame.kitPanel.Refresh()
+
+    def OnChooseFile(self, event):
+        wildcard = "PNG images (*.png)|*.png|" \
+                   "BMP images (*.bmp)|*.bmp"
+
+        kit = self.getKit()
+        curvalue = kit.attributes.get(self.att)
+        if not curvalue:
+            defaultDir = self.frame.gdbPath + "/uni/masks"
+        else:
+            # check to see if the file exists relative to kit dir
+            fullpath = "%s/%s" % (kit.foldername, curvalue)
+            if os.path.exists(fullpath):
+                defaultDir = os.path.split(fullpath)[0]
+            else:
+                fullpath = "%s/uni/masks/%s" % (self.frame.gdbPath, curvalue)
+                if os.path.exists(fullpath):
+                    defaultDir = os.path.split(fullpath)[0]
+                else:
+                    defaultDir = self.frame.gdbPath + "/uni/masks"
+
+        defaultFile = kit.attributes.get(self.att,DEFAULT_MASK)
+
+        dlg = wx.FileDialog(
+            self, message="Choose a file", defaultDir=defaultDir, 
+            defaultFile="", wildcard=wildcard, style=wx.FD_OPEN | wx.FD_CHANGE_DIR
+            )
+
+        # Show the dialog and retrieve the user response. If it is the OK response, 
+        # process the data.
+        if dlg.ShowModal() == wx.ID_OK:
+            # This returns a Python list of files that were selected.
+            files = dlg.GetPaths()
+            if len(files)>0:
+                newfile = os.path.normcase(files[0])
+                kitBasedir = os.path.normcase(kit.foldername)
+                standardBasedir = os.path.normcase(self.frame.gdbPath + "/uni/masks")
+                # make relative path
+                relpath1 = makeRelativePath(newfile,kitBasedir)
+                relpath2 = makeRelativePath(newfile,standardBasedir)
+                if len(relpath1)<=len(relpath2):
+                    self.SetStringSelection(relpath1)
+                else:
+                    self.SetStringSelection(relpath2)
+
+                # add kit to modified set
+                self.frame.addKitToModified(kit)
+
+        dlg.Destroy()
+
+
+"""
+A file choice with label
+"""
+class MyOverlayFile(MyPartFolder):
+
+    def SetStringSelection(self, str=None):
+        kit = self.getKit()
+        if not str: str = kit.attributes.get(self.att,"")
+        self.text.SetValue(str)
+        kit.attributes[self.att] = str
+        if self.refreshOnChange:
+            self.frame.kitPanel.Refresh()
+
+    def SetUndef(self):
+        kit = self.getKit()
+        self.text.SetValue("")
+        try:
+            del kit.attributes[self.att]
+        except AttributeError:
+            pass
+        except KeyError:
+            pass
+        if self.refreshOnChange:
+            self.frame.kitPanel.Refresh()
+
+    def OnChooseFile(self, event):
+        wildcard = "PNG images (*.png)|*.png|" \
+                   "BMP images (*.bmp)|*.bmp"
+
+        kit = self.getKit()
+        currdir = kit.foldername
+
+        dlg = wx.FileDialog(
+            self, message="Choose a file", defaultDir=currdir, 
+            defaultFile="", wildcard=wildcard, style=wx.FD_OPEN | wx.FD_CHANGE_DIR
+            )
+
+        # Show the dialog and retrieve the user response. If it is the OK response, 
+        # process the data.
+        if dlg.ShowModal() == wx.ID_OK:
+            # This returns a Python list of files that were selected.
+            files = dlg.GetPaths()
+            if len(files)>0:
+                newfile = os.path.normcase(files[0])
+                # make relative path
+                self.SetStringSelection(makeRelativePath(newfile, kit.foldername))
+
+                # add kit to modified set
+                self.frame.addKitToModified(kit)
+
+        dlg.Destroy()
+
+
+"""
 A panel with kit texture
 """
 class KitPanel(wx.Panel):
@@ -544,6 +983,30 @@ class KitPanel(wx.Panel):
         # bind events
         self.Bind(wx.EVT_PAINT, self.OnPaint)
 
+    def getOverlayFile(self,kit,overlay):
+        # check the team folder first
+        overlay = overlay.replace('\\',os.path.sep)
+        filename = os.path.normcase("%s/%s" % (kit.foldername,overlay))
+        filename = os.path.realpath(filename)
+        if os.path.exists(filename): return filename
+        ## check the standard folder
+        #filename = os.path.normcase("%s/uni/overlay/%s" % (self.frame.gdbPath,overlay))
+        #if os.path.exists(filename): return filename
+        # overlay file not found
+        print >>sys.stderr,"overlay '%s' NOT found for kit: %s" % (overlay,kit.foldername)
+        return None
+
+    def getMaskFile(self,kit,mask):
+        # check the team folder first
+        filename = os.path.normcase("%s/%s" % (kit.foldername,mask))
+        if os.path.exists(filename): return filename
+        # check the standard folder
+        filename = os.path.normcase("%s/uni/masks/%s" % (self.frame.gdbPath,mask))
+        if os.path.exists(filename): return filename
+        # mask file not found
+        print >>sys.stderr,"mask file '%s' NOT found for kit: %s" % (mask,kit.foldername)
+        return None
+
     def scaleAndDrawBitmap(self, dc, bmp):
         width,height = bmp.GetSize()
         print "(%d, %d)" % (width,height)
@@ -554,6 +1017,18 @@ class KitPanel(wx.Panel):
             self.frame.SetTitle('%s: (team %d) %dx%d kit' % (WINDOW_TITLE, self.kit.teamId, width, height))
         else:
             self.frame.SetTitle('%s: %dx%d kit' % (WINDOW_TITLE, width, height))
+        overlay = self.kit.attributes.get("overlay")
+        if overlay:
+            overlayfile = self.getOverlayFile(self.kit,overlay)
+            if overlayfile:
+                bmp = wx.Bitmap(overlayfile)
+                img = bmp.ConvertToImage()
+                width,height = bmp.GetSize()
+                if width != 512 or height != 256:
+                    img = img.Scale(512,256)
+                if not img.HasAlpha() and not img.HasMask():
+                    img.SetMaskColour(0xff,0,0xff) # pink overlay mask color
+                dc.DrawBitmap(img.ConvertToBitmap(),0,0,True)
 
     def drawBitmap(self, dc, kit):
         if os.path.exists(kit.foldername + "/all.png"):
@@ -702,7 +1177,10 @@ class KitPanel(wx.Panel):
             if not os.path.exists(font):
                 font = "%s/%s" % (kit.foldername, "font.bmp")
             if os.path.exists(font):
-                try: type = kit.attributes["name.shape"]
+                try: 
+                    type = kit.attributes["name.shape"]
+                    if type not in ["type1","type2","type3"]:
+                        type = "type1"
                 except KeyError: type = "type1"
                 try: pos = kit.attributes["name.location"]
                 except KeyError: pos = "top"
@@ -1010,7 +1488,7 @@ Please try choosing a different one.""" % self.gdbPath,
 
 class MyFrame(wx.Frame):
     def __init__(self, parent, id, title):
-        wx.Frame.__init__(self, parent, id, title, size=(800, 660))
+        wx.Frame.__init__(self, parent, id, title, size=(800, 720))
         self.gdbPath = "C:\\"
 
         # create a dictionary to keep track of modified kits
@@ -1056,9 +1534,27 @@ class MyFrame(wx.Frame):
         self.numbers = MyNumbersFile(p2, "numbers", "Numbers:", "undefined", self.gdbPath, self)
         self.numbers.refreshOnChange = True
 
+        # radar color
+        self.radarCS = KitColourSelect(p2, "radar.color", "Radar color:", self)
+
+        # shorts color
+        self.shortsCS = KitColourSelect(p2, "shorts.color", "Shorts color:", self)
+
+        # kit decription
+        self.desc = MyTextField(p2, "description", "Description:", "undefined", self.gdbPath, self)
+        self.desc.refreshOnChange = True
+
         # palette choice
         self.numpal = MyShortsNumPalFile(p2, "shorts.num-pal.%s", "Palette:", "undefined", self.gdbPath, self)
         self.numpal.refreshOnChange = True
+
+        # mask file choice
+        self.maskFile = MyMaskFile(p2, "mask", "Mask:", "undefined", self.gdbPath, self)
+        self.maskFile.refreshOnChange = True
+
+        # overlay file choice
+        self.overlayFile = MyOverlayFile(p2, "overlay", "Overlay:", "undefined", self.gdbPath, self)
+        self.overlayFile.refreshOnChange = True
 
         # shorts-num-location choice
         self.shortsNumLocation = MyList(p2, "shorts.number.location", "Shorts number location:", ["undefined", "off", "left", "right", "both"], self)
@@ -1121,6 +1617,11 @@ class MyFrame(wx.Frame):
         self.rightSizer.Add(self.nameLocation, 0, wx.LEFT | wx.ALIGN_CENTER, border=10)
         self.rightSizer.Add(self.logoLocation, 0, wx.LEFT | wx.ALIGN_CENTER, border=10)
         self.rightSizer.Add(self.numbers, 0, wx.LEFT | wx.BOTTOM | wx.ALIGN_CENTER, border=10)
+        self.rightSizer.Add(self.radarCS, 0, wx.LEFT | wx.ALIGN_CENTER, border=10)
+        self.rightSizer.Add(self.shortsCS, 0, wx.LEFT | wx.ALIGN_CENTER, border=10)
+        self.rightSizer.Add(self.desc, 0, wx.LEFT | wx.BOTTOM | wx.ALIGN_CENTER, border=10)
+        self.rightSizer.Add(self.maskFile, 0, wx.LEFT | wx.ALIGN_CENTER, border=10)
+        self.rightSizer.Add(self.overlayFile, 0, wx.LEFT | wx.ALIGN_CENTER, border=10)
         self.rightSizer.Add(self.shortsNumLocation, 0, wx.LEFT | wx.TOP | wx.ALIGN_CENTER, border=10)
         self.rightSizer.Add(self.numpal, 0, wx.LEFT | wx.BOTTOM | wx.ALIGN_CENTER, border=10)
         self.rightSizer.Add(self.checkShortsCombos, 0, wx.LEFT | wx.BOTTOM | wx.ALIGN_CENTER, border=10)
@@ -1259,6 +1760,36 @@ inside your kitserver folder)""",
         except:
             self.numpal.SetUndef()
 
+        # mask file
+        try:
+            self.maskFile.SetStringSelection(kit.attributes["mask"])
+        except:
+            self.maskFile.SetUndef()
+
+        # overlay file
+        try:
+            self.overlayFile.SetStringSelection(kit.attributes["overlay"])
+        except:
+            self.overlayFile.SetUndef()
+
+        # update radar color
+        try:
+            self.radarCS.SetRGBAColour(MakeRGBAColor(kit.attributes["radar.color"]))
+        except:
+            self.radarCS.ClearColour()
+
+        # update shorts color
+        try:
+            self.shortsCS.SetRGBAColour(MakeRGBAColor(kit.attributes["shorts.color"]))
+        except:
+            self.shortsCS.ClearColour()
+
+        # update description
+        try:
+            self.desc.SetStringSelection(kit.attributes["description"])
+        except:
+            self.desc.SetUndef()
+
         # hide True key, show "Check shorts combinations" button
         for x in range(self.shortsKeys.choice.GetCount()):
             self.shortsKeys.choice.Delete(0)
@@ -1282,6 +1813,11 @@ inside your kitserver folder)""",
             self.numbers.Enable(False)
             self.shortsKeys.Enable(False)
             self.checkShortsCombos.Enable(False)
+            self.desc.Enable(False)
+            self.radarCS.Enable(False)
+            self.shortsCS.Enable(False)
+            self.maskFile.Enable(False)
+            self.overlayFile.Enable(False)
         else:
             self.collar.Enable(True)
             self.model.Enable(True)
@@ -1293,6 +1829,11 @@ inside your kitserver folder)""",
             self.numbers.Enable(True)
             self.shortsKeys.Enable(False)
             self.checkShortsCombos.Enable(True)
+            self.desc.Enable(True)
+            self.radarCS.Enable(True)
+            self.shortsCS.Enable(True)
+            self.maskFile.Enable(True)
+            self.overlayFile.Enable(True)
 
 
     def OnRestore(self, event):
@@ -1429,9 +1970,7 @@ files for names and numbers, and some others.""" % (VERSION, DATE),
 
             try:
                 # write a comment line, if not already there
-                cmt = "# Attribute configuration file auto-generated by GDB Manager"
-                print >>att, cmt
-                print >>att
+                att.write("# Attribute configuration file auto-generated by GDB Manager\r\n\r\n")
                 self.writeSortedAttributes(att, kit)
 
             except Exception, e:
@@ -1443,15 +1982,14 @@ files for names and numbers, and some others.""" % (VERSION, DATE),
             if showConfirmation:
                 MessageBox(self, "Changes saved", "Your changes were successfully saved.")
 
-
     def writeSortedAttributes(self, file, kit):
         keys = kit.attributes.keys()
         keys.sort()
         for name in keys:
-            if name.startswith("shorts.num-pal.") or name == "numbers":
-                print >>file, '%s = "%s"' % (name, kit.attributes[name])
+            if name.startswith("shorts.num-pal.") or name in ["numbers","description","overlay","mask"]:
+                file.write('%s = "%s"\r\n' % (name, kit.attributes[name]))
             else:
-                print >>file, "%s = %s" % (name, kit.attributes[name])
+                file.write("%s = %s\r\n" % (name, kit.attributes[name]))
 
 
     """ 
