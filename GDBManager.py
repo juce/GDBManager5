@@ -427,6 +427,9 @@ class MyKeyList(wx.Panel):
         # bind events
         self.choice.Bind(wx.EVT_CHOICE, self.OnSelect)
 
+        # key events
+        self.frame.bindKeyEvents([self, self.label, self.choice])
+
         self.SetSizer(self.sizer)
         self.Layout()
 
@@ -473,6 +476,9 @@ class MyList(wx.Panel):
         # bind events
         self.choice.Bind(wx.EVT_CHOICE, self.OnSelect)
         self.button.Bind(wx.EVT_BUTTON, self.OnUndef)
+
+        # key events
+        self.frame.bindKeyEvents([self, self.label, self.choice, self.button])
 
         self.SetSizer(self.sizer)
         self.Layout()
@@ -565,6 +571,9 @@ class MyTextField(wx.Panel):
         self.button.Bind(wx.EVT_BUTTON, self.OnUndef)
         self.text.Bind(wx.EVT_TEXT, self.OnTextChange)
 
+        # key events
+        self.frame.bindKeyEvents([self, self.label, self.text, self.button])
+
         self.SetSizer(self.sizer)
         self.Layout()
 
@@ -647,6 +656,9 @@ class MyNumbersFile(wx.Panel):
         #self.text.Bind(wx.EVT_CHOICE, self.OnSelect)
         self.button.Bind(wx.EVT_BUTTON, self.OnUndef)
         self.fileButton.Bind(wx.EVT_BUTTON, self.OnChooseFile)
+
+        # key events
+        self.frame.bindKeyEvents([self, self.label, self.text, self.button, self.fileButton])
 
         self.SetSizer(self.sizer)
         self.Layout()
@@ -810,6 +822,12 @@ class MyPartFolder(MyNumbersFile):
         self.fileButton.Bind(wx.EVT_BUTTON, self.OnChooseFile)
         if self.checkBox:
             self.checkBox.Bind(wx.EVT_CHECKBOX, self.OnToggled)
+
+        # key events
+        ctrls = [self, self.text, self.label, self.button, self.fileButton]
+        if self.checkBox:
+            ctrls.append(self.checkBox)
+        self.frame.bindKeyEvents(ctrls)
 
         self.SetSizer(self.sizer)
         self.Layout()
@@ -1354,10 +1372,11 @@ class GDBTree(wx.TreeCtrl):
         self.reverseTeamMap = dict()
 
         # bind events
-        self.Bind(wx.EVT_KEY_DOWN, self.frame.OnKeyDown)
-        self.Bind(wx.EVT_KEY_UP, self.frame.OnKeyUp)
         self.Bind(wx.EVT_TREE_KEY_DOWN, self.OnKeyDown)
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnSelChanged)
+
+        # key events
+        self.frame.bindKeyEvents([self])
 
 
     """
@@ -1702,6 +1721,9 @@ class MyFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnAbout, id=301)
 
         self.checkShortsCombos.Bind(wx.EVT_BUTTON, self.OnCheckShortsCombos)
+
+        # key events
+        self.bindKeyEvents([self, p2])
 
         # Disable controls
         self.enableControls(None)
