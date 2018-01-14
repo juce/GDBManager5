@@ -19,6 +19,7 @@ SHORTS_MASK_PNG = os.getcwd() + "/shorts-mask.png"
 SHORTS63_MASK_PNG = os.getcwd() + "/shorts63-mask.png"
 WIZARD_PNG = os.getcwd() + "/wizard.png"
 WINDOW_TITLE = "GDB Manager 5"
+FRAME_WIDTH, FRAME_HEIGHT = 800, 750
 
 fs_encoding = sys.getfilesystemencoding()
 VAR_GDB_MAPFILE_ENCODING = 'GDB_MAP_ENCODING'
@@ -178,7 +179,7 @@ def readAttributes(kit):
             tok = line.split('=',1)
             if len(tok)==2:
                 name = tok[0].strip()
-                val = tok[1].strip(' "')
+                val = tok[1].strip().strip('"')
                 kit.attributes[name] = val
 
         att.close()
@@ -358,9 +359,9 @@ class KitColourSelect(wx.Panel):
         self.frame.addKitToModified()
 
 
-class MyValidator(wx.PyValidator):
+class MyValidator(wx.Validator):
     def __init__(self):
-        wx.PyValidator.__init__(self)
+        wx.Validator.__init__(self)
         self.Bind(wx.EVT_CHAR, self.OnChar)
 
     def Clone(self):
@@ -1505,7 +1506,7 @@ Please try choosing a different one.""" % self.gdbPath,
 
 class MyFrame(wx.Frame):
     def __init__(self, parent, id, title):
-        wx.Frame.__init__(self, parent, id, title, size=(800, 720))
+        wx.Frame.__init__(self, parent, id, title, size=(FRAME_WIDTH, FRAME_HEIGHT))
         self.gdbPath = "C:\\"
 
         # create a dictionary to keep track of modified kits
