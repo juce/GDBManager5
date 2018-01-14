@@ -7,7 +7,7 @@ class Target:
     def __init__(self, **kw):
         self.__dict__.update(kw)
         # for the versioninfo resources
-        self.version = "5.5.0"
+        self.version = "5.6.0"
         self.company_name = "Kitserver Ltd."
         self.copyright = "Copyright 2018 Juce"
         self.name = "GDB Manager 5"

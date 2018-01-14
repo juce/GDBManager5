@@ -1,5 +1,5 @@
 # GDB Manager
-# Version 5.5
+# Version 5.6
 # by Juce.
 
 import wx
@@ -13,7 +13,7 @@ import converter
 import codecs
 import chardet
 
-VERSION, DATE = "5.5", "01/2018"
+VERSION, DATE = "5.6", "01/2018"
 DEFAULT_PNG = os.getcwd() + "/default.png"
 SHORTS_MASK_PNG = os.getcwd() + "/shorts-mask.png"
 SHORTS63_MASK_PNG = os.getcwd() + "/shorts63-mask.png"
@@ -304,6 +304,11 @@ class KitColourSelect(wx.Panel):
         except KeyError:
             pass
 
+    def ModifyColour(self, color):
+        self.SetColour(color)
+
+        # add to modified list
+        self.frame.addKitToModified()
 
     def ClearColour(self):
         self.cs.SetColour(self.undef)
@@ -997,9 +1002,38 @@ class KitPanel(wx.Panel):
         self.SetBackgroundColour(wx.Colour(180,180,200))
         self.frame = frame
         self.kit = None
+        self.kitImg = None
 
         # bind events
         self.Bind(wx.EVT_PAINT, self.OnPaint)
+        self.Bind(wx.EVT_RIGHT_UP, self.OnPick)
+        self.Bind(wx.EVT_KEY_DOWN, self.frame.OnKeyDown)
+        self.Bind(wx.EVT_KEY_UP, self.frame.OnKeyUp)
+
+    def OnMouse(self, event):
+        if event.Entering:
+            self.SetFocus()
+        event.Skip()
+
+    def OnPick(self, evt):
+        if self.kit is None or self.kit.teamId == -1:
+            return
+        if self.frame.shiftDown:
+            #print 'ShortsColorPick: %d,%d' % (evt.X, evt.Y)
+            x, y = evt.X, evt.Y
+            r = self.kitImg.GetRed(x,y)
+            g = self.kitImg.GetGreen(x,y)
+            b = self.kitImg.GetBlue(x,y)
+            #print 'color: %02X%02X%02X' % (r,g,b)
+            self.frame.shortsCS.ModifyColour(wx.Colour(r,g,b))
+        else:
+            #print 'MainColorPick: %d,%d' % (evt.X, evt.Y)
+            x, y = evt.X, evt.Y
+            r = self.kitImg.GetRed(x,y)
+            g = self.kitImg.GetGreen(x,y)
+            b = self.kitImg.GetBlue(x,y)
+            #print 'color: %02X%02X%02X' % (r,g,b)
+            self.frame.radarCS.ModifyColour(wx.Colour(r,g,b))
 
     def getOverlayFile(self,kit,overlay):
         # check the team folder first
@@ -1029,7 +1063,9 @@ class KitPanel(wx.Panel):
         width,height = bmp.GetSize()
         print "(%d, %d)" % (width,height)
         if width != 512 and height != 256:
-            bmp = bmp.ConvertToImage().Scale(512,256).ConvertToBitmap()
+            img = bmp.ConvertToImage().Scale(512,256)
+            self.kitImg = img
+            bmp = img.ConvertToBitmap()
         dc.DrawBitmap(bmp, 0, 0, True)
         if self.kit and self.kit.teamId != -1:
             self.frame.SetTitle('%s: (team %d) %dx%d kit' % (WINDOW_TITLE, self.kit.teamId, width, height))
@@ -1516,6 +1552,8 @@ class MyFrame(wx.Frame):
         self.CreateStatusBar()
         self.SetStatusText("Modified kits: 0")
 
+        self.shiftDown = False
+
         # Create widgets
         ##################
 
@@ -1665,6 +1703,25 @@ class MyFrame(wx.Frame):
 
         # Disable controls
         self.enableControls(None)
+
+    def bindKeyEvents(self, controls):
+        for ctrl in controls:
+            ctrl.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
+            ctrl.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
+
+    def OnKeyDown(self, event):
+        key = event.GetKeyCode()
+        if key == wx.WXK_SHIFT and not self.shiftDown:
+            self.shiftDown = True
+            #print 'SHIFT down'
+        event.Skip()
+
+    def OnKeyUp(self, event):
+        key = event.GetKeyCode()
+        if key == wx.WXK_SHIFT:
+            self.shiftDown = False
+            #print 'SHIFT up'
+        event.Skip()
 
 
     """
