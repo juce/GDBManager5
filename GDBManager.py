@@ -126,13 +126,13 @@ def hasSamePalette(shirtPath, shortsPath):
     return palettelib.samePalette(shirt, shorts)
 
 def makeRelativePath(path, base):
-    print "makeRelativePath:"
+    #print "makeRelativePath:"
     path = os.path.normcase(os.path.realpath(path.replace('\\',os.path.sep)))
     base = os.path.normcase(os.path.realpath(base.replace('\\',os.path.sep)))
-    print ">>",path
-    print ">>",base
+    #print ">>",path
+    #print ">>",base
     prefix = os.path.commonprefix([path,base])
-    print ">>",prefix
+    #print ">>",prefix
     if len(prefix)==0:
         return path
     if prefix[-1] != os.path.sep:
@@ -183,7 +183,6 @@ def readAttributes(kit):
                 kit.attributes[name] = val
 
         att.close()
-        print kit.attributes
 
     except IOError:
         # unable to read attributes. Ignore.
@@ -436,7 +435,7 @@ class MyKeyList(wx.Panel):
 
     def OnSelect(self, event):
         selection = event.GetString()
-        print "Shorts selected: %s" % selection
+        #print "Shorts selected: %s" % selection
         self.frame.kitPanel.kit.shortsKey = selection
         # bind kit to shorts-kit
         kit = self.choice.GetClientData(self.choice.GetSelection())
@@ -616,11 +615,11 @@ class MyTextField(wx.Panel):
             oldVal = kit.attributes.get(self.att,"")
             newVal = self.text.GetValue()
             if newVal != oldVal:
-                #print "Description modified: old={%s}, new={%s}" % (oldVal,newVal)
+                #print "attribute {%s} modified: old={%s}, new={%s}" % (self.att,oldVal,newVal)
                 kit.attributes[self.att] = newVal
                 # add kit to modified set
                 self.frame.addKitToModified(kit)
-
+                self.frame.kitPanel.Refresh()
 
 
 """
@@ -656,6 +655,7 @@ class MyNumbersFile(wx.Panel):
         #self.text.Bind(wx.EVT_CHOICE, self.OnSelect)
         self.button.Bind(wx.EVT_BUTTON, self.OnUndef)
         self.fileButton.Bind(wx.EVT_BUTTON, self.OnChooseFile)
+        self.text.Bind(wx.EVT_TEXT, self.OnTextChange)
 
         # key events
         self.frame.bindKeyEvents([self, self.label, self.text, self.button, self.fileButton])
@@ -695,6 +695,18 @@ class MyNumbersFile(wx.Panel):
 
         # add kit to modified set
         self.frame.addKitToModified(kit)
+
+    def OnTextChange(self, event):
+        kit = self.getKit()
+        if kit != None:
+            oldVal = kit.attributes.get(self.att,"")
+            newVal = self.text.GetValue()
+            if newVal != oldVal:
+                #print "attribute {%s} modified: old={%s}, new={%s}" % (self.att,oldVal,newVal)
+                kit.attributes[self.att] = newVal
+                # add kit to modified set
+                self.frame.addKitToModified(kit)
+                self.frame.kitPanel.Refresh()
 
     def OnChooseFile(self, event):
         wildcard = "PNG images (*.png)|*.png|" \
@@ -749,6 +761,23 @@ class MyShortsNumPalFile(MyNumbersFile):
         if self.refreshOnChange:
             self.frame.kitPanel.Refresh()
 
+    def OnTextChange(self, event):
+        kit = self.getKit()
+        if kit != None:
+            try:
+                att = self.att % kit.shortsKey
+            except AttributeError:
+                # no shortsKey
+                return
+            oldVal = kit.attributes.get(att,"")
+            newVal = self.text.GetValue()
+            if newVal != oldVal:
+                #print "attribute {%s} modified: old={%s}, new={%s}" % (att,oldVal,newVal)
+                kit.attributes[att] = newVal
+                # add kit to modified set
+                self.frame.addKitToModified(kit)
+                self.frame.kitPanel.Refresh()
+
     def OnChooseFile(self, event):
         wildcard = "PNG images (*.png)|*.png|" \
                    "BMP images (*.bmp)|*.bmp"
@@ -774,6 +803,7 @@ class MyShortsNumPalFile(MyNumbersFile):
 
                 # add kit to modified set
                 self.frame.addKitToModified()
+                self.frame.kitPanel.Refresh()
 
 
 """
@@ -801,7 +831,7 @@ class MyPartFolder(MyNumbersFile):
         self.label.SetSize(self.label.GetBestSize())
 
         self.text = wx.TextCtrl(self, -1, "", size=(130,-1))
-        self.text.SetEditable(False)
+        #self.text.SetEditable(False)
         self.button = wx.Button(self, -1, "undef", size=(60,1))
         self.fileButton = wx.Button(self, -1, "...", size=(30,1))
 
@@ -872,7 +902,7 @@ class MyPartFolder(MyNumbersFile):
         if defaultItem in items: dlg.SetSelection(items.index(defaultItem))
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetStringSelection()
-            print "You selected: %s" % path
+            #print "You selected: %s" % path
             if path:
                 newpath = os.path.normcase(path)
                 self.SetStringSelection(newpath)
@@ -1079,7 +1109,7 @@ class KitPanel(wx.Panel):
 
     def scaleAndDrawBitmap(self, dc, bmp):
         width,height = bmp.GetSize()
-        print "(%d, %d)" % (width,height)
+        #print "(%d, %d)" % (width,height)
         if width != 512 and height != 256:
             img = bmp.ConvertToImage().Scale(512,256)
             self.kitImg = img
@@ -1211,7 +1241,7 @@ class KitPanel(wx.Panel):
                 numbers = "%s/%s" % (kit.foldername, kit.attributes["numbers"])
                 numbers = numbers.replace('\\',os.path.sep)
             except KeyError: numbers = ""
-            if os.path.exists(numbers):
+            if os.path.exists(numbers) and os.path.isfile(numbers):
                 bmp = wx.Bitmap(numbers).GetSubBitmap(rect)
                 scaledbmp = wx.Bitmap(
                         bmp.ConvertToImage().Scale(32,64))
@@ -1229,7 +1259,7 @@ class KitPanel(wx.Panel):
                     numpal = "%s/%s" % (kit.foldername, kit.attributes["shorts.num-pal."+kit.shortsKey])
                     numpal = numpal.replace('\\',os.path.sep)
                 except KeyError: numpal = ""
-                if os.path.exists(numpal):
+                if os.path.exists(numpal) and os.path.isfile(numpal):
                     try: shortsLoc = self.frame.shortsNumLocation.kit.attributes["shorts.number.location"]
                     except KeyError: shortsLoc = "left"
 
@@ -1414,7 +1444,7 @@ Do you want to save them?""",
         self.frame.modified.clear()
         self.frame.SetStatusText("Modified kits: 0");
         self.frame.selectKit(None)
-        print "GDB-tree updated."
+        #print "GDB-tree updated."
 
 
     def OnKeyDown(self, event):
@@ -1430,7 +1460,7 @@ Do you want to save them?""",
     def OnSelChanged(self, event):
         try:
             item = event.GetItem()
-            print "OnSelChanged: %s" % self.GetItemText(item)
+            #print "OnSelChanged: %s" % self.GetItemText(item)
             kit = self.GetItemData(item)
             self.frame.selectKit(kit)
 
