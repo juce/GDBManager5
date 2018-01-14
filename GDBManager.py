@@ -1354,6 +1354,8 @@ class GDBTree(wx.TreeCtrl):
         self.reverseTeamMap = dict()
 
         # bind events
+        self.Bind(wx.EVT_KEY_DOWN, self.frame.OnKeyDown)
+        self.Bind(wx.EVT_KEY_UP, self.frame.OnKeyUp)
         self.Bind(wx.EVT_TREE_KEY_DOWN, self.OnKeyDown)
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnSelChanged)
 
