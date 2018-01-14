@@ -25,6 +25,7 @@ VAR_GDB_MAPFILE_ENCODING = 'GDB_MAP_ENCODING'
 DEFAULT_MAPFILE_ENCODING = 'latin-1'
 
 DEFAULT_MASK = "mask.png"
+overlay_toggle = True
 
 overlayPositions = {
     "wide-back":{
@@ -376,7 +377,7 @@ class MyValidator(wx.PyValidator):
         return True
 
     def OnChar(self, event):
-        key = event.KeyCode()
+        key = event.KeyCode
 
         if key < wx.WXK_SPACE or key == wx.WXK_DELETE or key > 255:
             event.Skip()
@@ -386,10 +387,10 @@ class MyValidator(wx.PyValidator):
             event.Skip()
             return
 
-        if not wx.Validator_IsSilent():
+        if not wx.Validator.IsSilent():
             wx.Bell()
 
-        # Returning without calling even.Skip eats the event before it
+        # Returning without calling event.Skip eats the event before it
         # gets to the text control
         return
 
@@ -762,13 +763,20 @@ A dir choice with label
 """
 class MyPartFolder(MyNumbersFile):
 
-    def __init__(self, parent, attribute, labelText, value, rootPath, frame, kit=None):
+    def __init__(self, parent, attribute, labelText, value, rootPath, frame, kit=None, useCheckbox=False):
         wx.Panel.__init__(self, parent, -1)
         self.rootPath = rootPath
         self.frame = frame
         self.kit = kit
         self.att = attribute
-        self.label = wx.StaticText(self, -1, labelText, size=(140,-1), style=wx.ALIGN_RIGHT)
+        self.checkBox = None
+        if useCheckbox:
+            self.checkBox = wx.CheckBox(self, -1, label="", size=(20,1))
+            self.checkBox.SetValue(overlay_toggle)
+        if self.checkBox:
+            self.label = wx.StaticText(self, -1, labelText, size=(120,-1), style=wx.ALIGN_RIGHT)
+        else:
+            self.label = wx.StaticText(self, -1, labelText, size=(140,-1), style=wx.ALIGN_RIGHT)
         self.label.SetBackgroundColour(wx.Colour(230,230,230))
         font = wx.Font(10, wx.SWISS, wx.NORMAL, wx.NORMAL)
         self.label.SetFont(font)
@@ -782,6 +790,8 @@ class MyPartFolder(MyNumbersFile):
         self.sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.sizer.Add(self.button, 0, wx.RIGHT | wx.EXPAND, border=10)
         self.sizer.Add(self.label, 0, wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border=10)
+        if self.checkBox:
+            self.sizer.Add(self.checkBox, 0, wx.EXPAND)
         self.sizer.Add(self.text, 0, wx.EXPAND)
         self.sizer.Add(self.fileButton, 0, wx.EXPAND)
 
@@ -792,6 +802,8 @@ class MyPartFolder(MyNumbersFile):
         #self.text.Bind(wx.EVT_CHOICE, self.OnSelect)
         self.button.Bind(wx.EVT_BUTTON, self.OnUndef)
         self.fileButton.Bind(wx.EVT_BUTTON, self.OnChooseFile)
+        if self.checkBox:
+            self.checkBox.Bind(wx.EVT_CHECKBOX, self.OnToggled)
 
         self.SetSizer(self.sizer)
         self.Layout()
@@ -817,6 +829,11 @@ class MyPartFolder(MyNumbersFile):
             pass
         if self.refreshOnChange:
             self.frame.kitPanel.Refresh()
+
+    def OnToggled(self, event):
+        global overlay_toggle
+        overlay_toggle = not overlay_toggle
+        self.frame.kitPanel.Refresh()
 
     def OnChooseFile(self, event):
         kit = self.getKit()
@@ -1018,7 +1035,7 @@ class KitPanel(wx.Panel):
         else:
             self.frame.SetTitle('%s: %dx%d kit' % (WINDOW_TITLE, width, height))
         overlay = self.kit.attributes.get("overlay")
-        if overlay:
+        if overlay and overlay_toggle:
             overlayfile = self.getOverlayFile(self.kit,overlay)
             if overlayfile:
                 bmp = wx.Bitmap(overlayfile)
@@ -1553,7 +1570,7 @@ class MyFrame(wx.Frame):
         self.maskFile.refreshOnChange = True
 
         # overlay file choice
-        self.overlayFile = MyOverlayFile(p2, "overlay", "Overlay:", "undefined", self.gdbPath, self)
+        self.overlayFile = MyOverlayFile(p2, "overlay", "Overlay:", "undefined", self.gdbPath, self, useCheckbox=True)
         self.overlayFile.refreshOnChange = True
 
         # shorts-num-location choice
@@ -1644,6 +1661,9 @@ class MyFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnAbout, id=301)
 
         self.checkShortsCombos.Bind(wx.EVT_BUTTON, self.OnCheckShortsCombos)
+
+        # Disable controls
+        self.enableControls(None)
 
 
     """
