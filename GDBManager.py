@@ -1,5 +1,5 @@
 # GDB Manager
-# Version 5.4
+# Version 5.5
 # by Juce.
 
 import wx

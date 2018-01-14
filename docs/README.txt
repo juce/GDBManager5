@@ -1,6 +1,6 @@
-GDB Manager 5                                            September 15, 2011
+GDB Manager 5                                              January 14, 2018
 ===========================================================================
-Version 5.4.0
+Version 5.5.0
 
 
 1. INTRODUCTION
