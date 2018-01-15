@@ -19,7 +19,7 @@ SHORTS_MASK_PNG = os.getcwd() + "/shorts-mask.png"
 SHORTS63_MASK_PNG = os.getcwd() + "/shorts63-mask.png"
 WIZARD_PNG = os.getcwd() + "/wizard.png"
 WINDOW_TITLE = "GDB Manager 5"
-FRAME_WIDTH, FRAME_HEIGHT = 800, 750
+FRAME_WIDTH, FRAME_HEIGHT = 800, 770
 
 fs_encoding = sys.getfilesystemencoding()
 VAR_GDB_MAPFILE_ENCODING = 'GDB_MAP_ENCODING'
@@ -1093,7 +1093,7 @@ class KitPanel(wx.Panel):
         #filename = os.path.normcase("%s/uni/overlay/%s" % (self.frame.gdbPath,overlay))
         #if os.path.exists(filename): return filename
         # overlay file not found
-        print >>sys.stderr,"overlay '%s' NOT found for kit: %s" % (overlay,kit.foldername)
+        print >>sys.stderr,(u"overlay '%s' NOT found for kit: %s" % (overlay,kit.foldername)).encode(fs_encoding)
         return None
 
     def getMaskFile(self,kit,mask):
@@ -1104,7 +1104,7 @@ class KitPanel(wx.Panel):
         filename = os.path.normcase("%s/uni/masks/%s" % (self.frame.gdbPath,mask))
         if os.path.exists(filename): return filename
         # mask file not found
-        print >>sys.stderr,"mask file '%s' NOT found for kit: %s" % (mask,kit.foldername)
+        print >>sys.stderr,(u"mask file '%s' NOT found for kit: %s" % (mask,kit.foldername)).encode(fs_encoding)
         return None
 
     def scaleAndDrawBitmap(self, dc, bmp):
@@ -1471,10 +1471,10 @@ Do you want to save them?""",
     Creates new Kit object
     """
     def makeKit(self, path):
+        path = unicodedata.normalize('NFC',path)
+        path = os.path.normcase(path)
         kit = Kit(path)
         try: 
-            path = unicodedata.normalize('NFC',path)
-            path = os.path.normcase(path)
             foldername = os.path.split(path)[0]
             kit.teamId = self.reverseTeamMap[foldername]
             kit.shortsKey = os.path.split(path)[1]
@@ -1797,7 +1797,7 @@ inside your kitserver folder)""",
 
         if dlg.ShowModal() == wx.ID_OK:
             self.gdbPath = dlg.GetPath()
-            print "You selected %s" % self.gdbPath
+            print u"You selected %s" % self.gdbPath
 
             # clear out kit panel, and disable controls
             self.enableControls(None)
