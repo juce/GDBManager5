@@ -13,7 +13,7 @@ import converter
 import codecs
 import chardet
 
-VERSION, DATE = "5.6", "01/2018"
+VERSION, DATE = "5.6.1", "04/2018"
 DEFAULT_PNG = os.getcwd() + "/default.png"
 SHORTS_MASK_PNG = os.getcwd() + "/shorts-mask.png"
 SHORTS63_MASK_PNG = os.getcwd() + "/shorts63-mask.png"
@@ -1110,10 +1110,10 @@ class KitPanel(wx.Panel):
     def scaleAndDrawBitmap(self, dc, bmp):
         width,height = bmp.GetSize()
         #print "(%d, %d)" % (width,height)
+        self.kitImg = bmp.ConvertToImage()
         if width != 512 and height != 256:
-            img = bmp.ConvertToImage().Scale(512,256)
-            self.kitImg = img
-            bmp = img.ConvertToBitmap()
+            self.kitImg = self.kitImg.Scale(512,256)
+            bmp = self.kitImg.ConvertToBitmap()
         dc.DrawBitmap(bmp, 0, 0, True)
         if self.kit and self.kit.teamId != -1:
             self.frame.SetTitle('%s: (team %d) %dx%d kit' % (WINDOW_TITLE, self.kit.teamId, width, height))
